@@ -14,7 +14,7 @@ let string = await iq(block, 'one/two/three').toString()
 // hello world
 ```
 
-## Configuring Storage
+### Configuring Storage
 
 Read-only example:
 
