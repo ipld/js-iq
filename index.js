@@ -137,5 +137,8 @@ class MultiQuery extends Query {
 
 module.exports = (...args) => new Query(module.exports.config, ...args)
 module.exports.config = { lookup: new types.Lookup() }
+module.exports.defaults = opts => (...args) => {
+  return new Query(Object.assign({}, module.exports.config, opts), ...args)
+}
 module.exports.Query = Query
 module.exports.Selector = Selector

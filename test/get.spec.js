@@ -30,11 +30,6 @@ const asyncList = async iter => {
   return parts
 }
 
-const mkiq = opts => {
-  opts = Object.assign({}, opts, iq.config)
-  return (...args) => new iq.Query(opts, ...args)
-}
-
 test('get string kind, single block', async () => {
   let block = Block.encoder({ one: { two: { three: 'hello world' } } }, 'dag-json')
   let str = await iq(block, 'one/two/three').toString()
