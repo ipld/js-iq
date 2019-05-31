@@ -36,9 +36,13 @@ const mkiq = opts => {
 }
 
 test('get string kind, single block', async () => {
-  let { get } = storage()
   let block = Block.encoder({ one: { two: { three: 'hello world' } } }, 'dag-json')
-  let q = mkiq({ get })
-  let str = await q(block, 'one/two/three').toString()
+  let str = await iq(block, 'one/two/three').toString()
   same(str, 'hello world')
+})
+
+test('read bytes, single block', async () => {
+  let block = Block.encoder({ one: { two: { three: Buffer.from('hello world') } } }, 'dag-json')
+  let buffer = await iq(block, 'one/two/three').read()
+  same(buffer, Buffer.from('hello world'))
 })

@@ -13,24 +13,39 @@ const getLast = async (iter, onTrace = noop) => {
   return last
 }
 
+const readIterator = async function * (config, target, expr, start, end) {
+  if (expr) {
+    target = await types.get(config, target, expr)
+  }
+  yield * types.read(config, target, start, end)
+}
+
 class Selector {
   constructor (config, root, expr) {
     this.config = config
     this.root = root
     this.expr = expr
   }
-  async resolve (expression) {
+  _expression (expression) {
     let expr = this.expr || ''
     if (expression) {
       if (!expr.endsWith('/')) expr += '/'
-      expr = +expression
+      expr += expression
     }
+    return expr
+  }
+  async resolve (expression) {
+    let expr = this._expression(expression)
     if (!expr.length) {
-      return [await getLast(types.system(this.config, this.root, this.config.onTrace))]
+      return [await getLast(types.system(this.config, this.root), this.config.onTrace)]
     } else {
-      // This will get much more complicated once actually selectors are implemented
+      // This will get much more complicated once selectors are actually implemented
       return [await types.get(this.config, this.root, expr)]
     }
+  }
+  readIterator (expression, start, end) {
+    let expr = this._expression(expression)
+    return readIterator(this.config, this.root, expr, start, end)
   }
 }
 
@@ -62,6 +77,19 @@ const argsToSelector = (config, args) => {
   }
 }
 
+const parseReaderArgs = args => {
+  let opts = {}
+  while (args.length) {
+    let arg = args.shift()
+    if (typeof arg === 'string') opts.expression = arg
+    else {
+      if (opts.start && opts.start !== 0) opts.end = arg
+      else opts.start = arg
+    }
+  }
+  return opts
+}
+
 class Query {
   constructor (config, ...args) {
     this.config = config
@@ -76,10 +104,22 @@ class Query {
     let results = await this._get(expression)
     return new MultiQuery(this.config, results)
   }
-  async toString (joiner) {
+  async toString (joiner='\n') {
     let results = await this._get()
     /* currently only supports kinds */
     return results.map(r => r.node).join('joiner')
+  }
+  async read (...args) {
+    let iter = this.readIterator(...args)
+    let buffers = []
+    for await (let buffer of iter) {
+      buffers.push(buffer)
+    }
+    return Buffer.concat(buffers)
+  }
+  readIterator (...args) {
+    let { expression, start, end } = parseReaderArgs(args)
+    return this.selector.readIterator(expression)
   }
 }
 
