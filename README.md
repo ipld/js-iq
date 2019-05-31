@@ -25,6 +25,7 @@ iq.config.get = get
 
 let block = Block.encoder({one: {two: {three: 'hello world'}}})
 let cid = await block.cid()
+store[cid.toString()] = block
 
 let string = await iq(`${cid.toString()}/one/two/three`).toString()
 // hello world
