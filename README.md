@@ -6,6 +6,7 @@ Simplified interface for IPLD graph reading and manipulation.
 
 ```javascript
 let iq = require('@ipld/iq')
+let Block = require('@ipld/block')
 
 let block = Block.encoder({one: {two: {three: 'hello world'}}})
 
@@ -13,7 +14,7 @@ let string = await iq(block, 'one/two/three').toString()
 // hello world
 ```
 
-## Configuring Storage
+### Configuring Storage
 
 Read-only example:
 
@@ -25,6 +26,7 @@ iq.config.get = get
 
 let block = Block.encoder({one: {two: {three: 'hello world'}}})
 let cid = await block.cid()
+store[cid.toString()] = block
 
 let string = await iq(`${cid.toString()}/one/two/three`).toString()
 // hello world
