@@ -6,6 +6,7 @@ Simplified interface for IPLD graph reading and manipulation.
 
 ```javascript
 let iq = require('@ipld/iq')
+let Block = require('@ipld/block')
 
 let block = Block.encoder({one: {two: {three: 'hello world'}}})
 
