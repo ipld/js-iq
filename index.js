@@ -43,9 +43,9 @@ class Selector {
       return [await types.get(this.config, this.root, expr)]
     }
   }
-  readIterator (expression, start, end) {
-    let expr = this._expression(expression)
-    return readIterator(this.config, this.root, expr, start, end)
+  readIterator (joiner, start, end) {
+    // joiner not implemented until we have selector expressions that match more than one thing
+    return readIterator(this.config, this.root, this.expr, start, end)
   }
 }
 
@@ -81,7 +81,8 @@ const parseReaderArgs = args => {
   let opts = {}
   while (args.length) {
     let arg = args.shift()
-    if (typeof arg === 'string') opts.expression = arg
+    if (typeof arg === 'string') opts.joiner = Buffer.from(arg)
+    else if (Buffer.isBuffer(arg)) opts.joiner = arg
     else {
       if (opts.start && opts.start !== 0) opts.end = arg
       else opts.start = arg
@@ -118,8 +119,8 @@ class Query {
     return Buffer.concat(buffers)
   }
   readIterator (...args) {
-    let { expression, start, end } = parseReaderArgs(args)
-    return this.selector.readIterator(expression)
+    let { joiner, start, end } = parseReaderArgs(args)
+    return this.selector.readIterator(joiner, start, end)
   }
 }
 

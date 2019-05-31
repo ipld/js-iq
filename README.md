@@ -32,4 +32,32 @@ let string = await iq(`${cid.toString()}/one/two/three`).toString()
 // hello world
 ```
 
+# API
 
+## Read APIs
+
+### query.toString([joiner='\n'])
+
+Returns any string values from the expression. 
+
+If multiple values are found the joiner string is be used to join them into a single string.
+
+Example at top of README.
+
+### query.read([start, end])
+
+* `.read(0, 12)` reads the path value from 0 to the 15th byte.
+* `.read(5)` reads from the 5th byte.
+
+Full example:
+
+```javascript
+let block = Block.encoder({one: {two: {three: Buffer.from('hello world')}}})
+
+let buffer = await iq(block, 'one/two/three').read()
+// Buffer containing 'hello world'
+Buffer.isBuffer(buffer)
+// true
+```
+
+### query.readIterator(...[start, end])
