@@ -1,4 +1,4 @@
-const types = require('../js-types')
+const types = require('@ipld/types')
 const CID = require('cids')
 const Block = require('@ipld/block')
 
@@ -108,7 +108,24 @@ class Query {
   async toString (joiner='\n') {
     let results = await this._get()
     /* currently only supports kinds */
-    return results.map(r => r.node).join('joiner')
+    let trystring = r => {
+      if (!r.toString) throw new Error('Node cannot be converted to string')
+      return r.toString()
+    }
+    results = await Promise.all(results.map(r => trystring(r)))
+    return results.join(joiner)
+  }
+  async number () {
+    let results = await this._get()
+    if (results.length > 1) throw new Error('Cannot convert multiple results into a number')
+    if (!results[0].toNumber) throw new Error('Value cannot be converted to number')
+    return results[0].toNumber()
+  }
+  async int () {
+    let results = await this._get()
+    if (results.length > 1) throw new Error('Cannot convert multiple results into an integer')
+    if (!results[0].toInt) throw new Error('Value cannot be converted to integer')
+    return results[0].toInt()
   }
   async read (...args) {
     let iter = this.readIterator(...args)
