@@ -7,32 +7,8 @@ const iq = require('../')
 const same = (...args) => assert.ok(tsame(...args))
 const test = it
 
-const storage = () => {
-  let kv = {}
-  let get = cid => {
-    let _cid = cid.toBaseEncodedString()
-    if (!kv[_cid]) throw new Error('Not found.')
-    return kv[_cid]
-  }
-  let put = async block => {
-    let cid = await block.cid()
-    let _cid = cid.toBaseEncodedString()
-    kv[_cid] = block
-  }
-  return { put, get }
-}
-
-const asyncList = async iter => {
-  let parts = []
-  for await (let part of iter) {
-    parts.push(part)
-  }
-  return parts
-}
-
 test('get string kind, single block', async () => {
   let block = Block.encoder({ one: { two: { three: 'hello world' } } }, 'dag-json')
   let str = await iq(block, 'one/two/three').toString()
   same(str, 'hello world')
 })
-

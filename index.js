@@ -114,7 +114,7 @@ class Query {
     let results = await this._get(expression)
     return new MultiQuery(this.config, results)
   }
-  async toString (joiner='\n') {
+  async toString (joiner = '\n') {
     let results = await this._get()
     /* currently only supports kinds */
     let trystring = r => {
@@ -149,7 +149,7 @@ class Query {
     return this.selector.readIterator(joiner, start, end)
   }
   keyIterator () {
-   return keyIterator(this) 
+    return keyIterator(this)
   }
   async keys () {
     let keys = []

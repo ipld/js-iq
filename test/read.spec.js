@@ -7,29 +7,6 @@ const iq = require('../')
 const same = (...args) => assert.ok(tsame(...args))
 const test = it
 
-const storage = () => {
-  let kv = {}
-  let get = cid => {
-    let _cid = cid.toBaseEncodedString()
-    if (!kv[_cid]) throw new Error('Not found.')
-    return kv[_cid]
-  }
-  let put = async block => {
-    let cid = await block.cid()
-    let _cid = cid.toBaseEncodedString()
-    kv[_cid] = block
-  }
-  return { put, get }
-}
-
-const asyncList = async iter => {
-  let parts = []
-  for await (let part of iter) {
-    parts.push(part)
-  }
-  return parts
-}
-
 test('read bytes, single block', async () => {
   let block = Block.encoder({ one: { two: { three: Buffer.from('hello world') } } }, 'dag-json')
   let buffer = await iq(block, 'one/two/three').read()
@@ -47,5 +24,3 @@ test('read integer', async () => {
   let num = await iq(block, 'size').int()
   same(num, 12)
 })
-
-
