@@ -30,9 +30,10 @@ const asyncList = async iter => {
   return parts
 }
 
-test('get string kind, single block', async () => {
-  let block = Block.encoder({ one: { two: { three: 'hello world' } } }, 'dag-json')
-  let str = await iq(block, 'one/two/three').toString()
-  same(str, 'hello world')
+test('keys', async () => {
+  let block = Block.encoder({ hello: 1, world: 2 }, 'dag-json')
+  let keys = await iq(block).keys()
+  same(keys, ['hello', 'world'])
 })
+
 

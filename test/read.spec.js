@@ -30,9 +30,22 @@ const asyncList = async iter => {
   return parts
 }
 
-test('get string kind, single block', async () => {
-  let block = Block.encoder({ one: { two: { three: 'hello world' } } }, 'dag-json')
-  let str = await iq(block, 'one/two/three').toString()
-  same(str, 'hello world')
+test('read bytes, single block', async () => {
+  let block = Block.encoder({ one: { two: { three: Buffer.from('hello world') } } }, 'dag-json')
+  let buffer = await iq(block, 'one/two/three').read()
+  same(buffer, Buffer.from('hello world'))
 })
+
+test('read number', async () => {
+  let block = Block.encoder({ size: 12 }, 'dag-json')
+  let num = await iq(block, 'size').number()
+  same(num, 12)
+})
+
+test('read integer', async () => {
+  let block = Block.encoder({ size: 12 }, 'dag-json')
+  let num = await iq(block, 'size').int()
+  same(num, 12)
+})
+
 

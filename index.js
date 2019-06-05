@@ -10,7 +10,7 @@ const getLast = async (iter, onTrace = noop) => {
     onTrace(line)
     last = line
   }
-  return last
+  return last.result
 }
 
 const readIterator = async function * (config, target, expr, start, end) {
@@ -68,6 +68,8 @@ const argsToSelector = (config, args) => {
       expr = expr.slice(i + 1)
       let cid = new CID(str)
       return new Selector(config, cid, expr)
+    } else if (Block.isBlock(args[0])) {
+      return new Selector(config, args[0])
     }
     throw new Error('Not Implemented, first arg must contain target')
   } else if (args.length === 2) {
@@ -89,6 +91,13 @@ const parseReaderArgs = args => {
     }
   }
   return opts
+}
+
+const keyIterator = async function * (q) {
+  let results = await q._get()
+  for (let result of results) {
+    yield * types.keys(q.config, result)
+  }
 }
 
 class Query {
@@ -138,6 +147,16 @@ class Query {
   readIterator (...args) {
     let { joiner, start, end } = parseReaderArgs(args)
     return this.selector.readIterator(joiner, start, end)
+  }
+  keyIterator () {
+   return keyIterator(this) 
+  }
+  async keys () {
+    let keys = []
+    for await (let key of this.keyIterator()) {
+      keys.push(key)
+    }
+    return keys
   }
 }
 
