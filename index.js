@@ -35,17 +35,28 @@ class Selector {
     return expr
   }
   async resolve (expression) {
+    if (this._resolved) return this._resolved
     let expr = this._expression(expression)
     if (!expr.length) {
-      return [await getLast(types.system(this.config, this.root), this.config.onTrace)]
+      this._resolved = [await getLast(types.system(this.config, this.root), this.config.onTrace)]
     } else {
       // This will get much more complicated once selectors are actually implemented
-      return [await types.get(this.config, this.root, expr)]
+      this._resolved = [await types.get(this.config, this.root, expr)]
     }
+    return this._resolved
   }
   readIterator (joiner, start, end) {
     // joiner not implemented until we have selector expressions that match more than one thing
     return readIterator(this.config, this.root, this.expr, start, end)
+  }
+  async exists () {
+    try {
+      await this.resolve()
+    } catch (e) {
+      if (e.message.toLowerCase().startsWith('not found')) return false
+      else throw e
+    }
+    return !!this._resolved.length
   }
 }
 
@@ -110,9 +121,13 @@ class Query {
     if (!results.length) throw new Error('Not found')
     return results
   }
-  async get (expression) {
+  async q (expression) {
     let results = await this._get(expression)
+    if (results.length === 1) return new Query(this.config, results)
     return new MultiQuery(this.config, results)
+  }
+  exists () {
+    return this.selector.exists()
   }
   async toString (joiner = '\n') {
     let results = await this._get()
