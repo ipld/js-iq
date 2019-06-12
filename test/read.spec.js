@@ -24,3 +24,9 @@ test('read integer', async () => {
   let num = await iq(block, 'size').int()
   same(num, 12)
 })
+
+test('read byte length', async () => {
+  let block = Block.encoder({ hello: Buffer.from('world') }, 'dag-json')
+  let num = await iq(block, 'hello').length()
+  same(num, 5)
+})

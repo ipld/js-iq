@@ -1,4 +1,4 @@
-const types = require('@ipld/types')
+const generics = require('@ipld/generics')
 const CID = require('cids')
 const Block = require('@ipld/block')
 
@@ -15,9 +15,9 @@ const getLast = async (iter, onTrace = noop) => {
 
 const readIterator = async function * (config, target, expr, start, end) {
   if (expr) {
-    target = await types.get(config, target, expr)
+    target = await generics.get(config, target, expr)
   }
-  yield * types.read(config, target, start, end)
+  yield * generics.read(config, target, start, end)
 }
 
 class Selector {
@@ -38,10 +38,10 @@ class Selector {
     if (this._resolved) return this._resolved
     let expr = this._expression(expression)
     if (!expr.length) {
-      this._resolved = [await getLast(types.system(this.config, this.root), this.config.onTrace)]
+      this._resolved = [await getLast(generics.system(this.config, this.root), this.config.onTrace)]
     } else {
       // This will get much more complicated once selectors are actually implemented
-      this._resolved = [await types.get(this.config, this.root, expr)]
+      this._resolved = [await generics.get(this.config, this.root, expr)]
     }
     return this._resolved
   }
@@ -107,7 +107,7 @@ const parseReaderArgs = args => {
 const keyIterator = async function * (q) {
   let results = await q._get()
   for (let result of results) {
-    yield * types.keys(q.config, result)
+    yield * generics.keys(q.config, result)
   }
 }
 
@@ -144,6 +144,14 @@ class Query {
     if (results.length > 1) throw new Error('Cannot convert multiple results into a number')
     if (!results[0].toNumber) throw new Error('Value cannot be converted to number')
     return results[0].toNumber()
+  }
+  async length () {
+    let results = await this._get()
+    let size = 0
+    for (let result of results) {
+      size += await generics.length(this.config, result)
+    }
+    return size
   }
   async int () {
     let results = await this._get()
@@ -187,7 +195,7 @@ class MultiQuery extends Query {
 }
 
 module.exports = (...args) => new Query(module.exports.config, ...args)
-module.exports.config = { lookup: new types.Lookup() }
+module.exports.config = { lookup: new generics.Lookup() }
 module.exports.defaults = opts => (...args) => {
   return new Query(Object.assign({}, module.exports.config, opts), ...args)
 }
