@@ -24,7 +24,7 @@ class Selector {
   constructor (config, root, expr) {
     this.config = config
     this.root = root
-    this.expr = expr
+    this.expr = expr || ''
   }
   _expression (expression) {
     let expr = this.expr || ''
@@ -58,6 +58,10 @@ class Selector {
     }
     return !!this._resolved.length
   }
+  selector (expr) {
+    if (!expr.startsWith('/')) expr = '/' + expr
+    return new Selector(this.config, this.root, this.expr + expr)
+  }
 }
 
 const isTarget = target => {
@@ -79,10 +83,10 @@ const argsToSelector = (config, args) => {
       expr = expr.slice(i + 1)
       let cid = new CID(str)
       return new Selector(config, cid, expr)
-    } else if (Block.isBlock(args[0])) {
+    } else {
+      // TODO: we should probably do some type checking here
       return new Selector(config, args[0])
     }
-    throw new Error('Not Implemented, first arg must contain target')
   } else if (args.length === 2) {
     let target = isTarget(args[0])
     if (!target) throw new Error('Not Implemented, first arg must be target')
@@ -112,19 +116,18 @@ const keyIterator = async function * (q) {
 }
 
 class Query {
-  constructor (config, ...args) {
+  constructor (config, selector) {
     this.config = config
-    this.selector = argsToSelector(config, args)
+    this.selector = selector
   }
   async _get (expression) {
     let results = await this.selector.resolve(expression)
     if (!results.length) throw new Error('Not found')
     return results
   }
-  async q (expression) {
-    let results = await this._get(expression)
-    if (results.length === 1) return new Query(this.config, results)
-    return new MultiQuery(this.config, results)
+  q (expression) {
+    let selector = this.selector.selector(expression)
+    return new Query(this.config, selector)
   }
   exists () {
     return this.selector.exists()
@@ -183,21 +186,12 @@ class Query {
   }
 }
 
-class MultiQuery extends Query {
-  constructor (config, targets) {
-    super(config)
-    this.targets = targets
-  }
-  async _get (expression) {
-    let promises = this.targets.map(t => (new Selector(this.config, t)).resolve(expression))
-    return [].concat(...await Promise.all(promises))
-  }
-}
-
-module.exports = (...args) => new Query(module.exports.config, ...args)
+module.exports = (...args) => new Query(module.exports.config, argsToSelector(module.exports.config, args))
 module.exports.config = { lookup: new generics.Lookup() }
 module.exports.defaults = opts => (...args) => {
-  return new Query(Object.assign({}, module.exports.config, opts), ...args)
+  let config = Object.assign({}, module.exports.config, opts)
+  let selector = argsToSelector(config, args)
+  return new Query(config, selector)
 }
 module.exports.Query = Query
 module.exports.Selector = Selector
