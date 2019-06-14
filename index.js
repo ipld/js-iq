@@ -4,13 +4,13 @@ const Block = require('@ipld/block')
 
 const noop = () => {}
 
-const getLast = async (iter, onTrace = noop) => {
-  let last
+const toArray = async (iter, onTrace = noop) => {
+  let arr = []
   for await (let line of iter) {
     onTrace(line)
-    last = line
+    arr.push(line)
   }
-  return last.result
+  return arr
 }
 
 const readIterator = async function * (config, target, expr, start, end) {
@@ -37,13 +37,17 @@ class Selector {
   async resolve (expression) {
     if (this._resolved) return this._resolved
     let expr = this._expression(expression)
-    if (!expr.length) {
-      this._resolved = [await getLast(generics.system(this.config, this.root), this.config.onTrace)]
-    } else {
-      // This will get much more complicated once selectors are actually implemented
-      this._resolved = [await generics.get(this.config, this.root, expr)]
-    }
+
+    let info
+    if (expr.length) info = { method: 'get', args: { path: expr } }
+    this._trace = await toArray(generics.system(this.config, this.root, info), this.config.onTrace)
+    /* a bit of a hack, for now, since we only supports paths and not selectors */
+    this._resolved = [this._trace.slice(-1)[0].result]
     return this._resolved
+  }
+  async blocks () {
+    await this.resolve()
+    return this._trace.filter(l => l.trace === 'decode').map(l => l.block)
   }
   readIterator (joiner, start, end) {
     // joiner not implemented until we have selector expressions that match more than one thing
@@ -183,6 +187,9 @@ class Query {
       keys.push(key)
     }
     return keys
+  }
+  blocks () {
+    return this.selector.blocks()
   }
 }
 
