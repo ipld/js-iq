@@ -36,6 +36,12 @@ let string = await iq(`${cid.toString()}/one/two/three`).toString()
 
 ## Read APIs
 
+### query.value()
+
+Returns a decoded "kind." Best effort is made to determine the kind from composite types.
+
+*TODO: Implement some kind of configurable "max size" for composite types which may be prohibitively expensive to pull into memory.*
+
 ### query.toString([joiner='\n'])
 
 Returns any string values from the expression. 
